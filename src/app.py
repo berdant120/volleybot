@@ -6,11 +6,10 @@ import traceback
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CallbackContext, CommandHandler, PollAnswerHandler, MessageHandler, Filters, \
     PicklePersistence
-from telegram.utils.helpers import mention_html
 
 from config import TELEGRAM_BOT_TOKEN, DEV_CHAT_ID, CACHE_FILE_PATH
-from models import PollModel, PollAnswerModel, UserModel
-from utils import parse_max_param, check_permissions
+from models import PollModel, UserModel
+from utils import check_permissions
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -24,7 +23,6 @@ def receive_poll(update: Update, context: CallbackContext) -> None:
     actual_poll = update.effective_message.poll
     try:
         check_permissions(update.effective_user.username)
-        max_answer_amount = parse_max_param(actual_poll.question)
         options = [o.text for o in actual_poll.options]
 
         message = context.bot.send_poll(
@@ -41,7 +39,6 @@ def receive_poll(update: Update, context: CallbackContext) -> None:
             options=options,
             message_id=message.message_id,
             chat_id=update.effective_chat.id,
-            option_1_limit=max_answer_amount,
         )
         context.bot_data[message.poll.id] = poll_model
         logging.info(f'Created poll {message.poll.id}:{poll_model}')
@@ -65,9 +62,10 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     if poll_model.closed:
         return
 
-    for selected_option in answer.option_ids:
-        poll_model.answers[selected_option].append(PollAnswerModel(
-            UserModel(answer.user.first_name, answer.user.username, answer.user.id)))
+    poll_model.update_answers(
+        selected_options=answer.option_ids,
+        user=UserModel(answer.user.first_name, answer.user.username, answer.user.id),
+    )
 
     if len(poll_model.answers[0]) < poll_model.option_1_limit:
         return
@@ -75,11 +73,9 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     context.bot.stop_poll(poll_model.chat_id, poll_model.message_id)
     poll_model.closed = True
 
-    users_htmls = [f'{i + 1}. {mention_html(x.user.tg_id, x.user.name)}' for i, x in enumerate(poll_model.answers[0])]
-    user_list_str = '\n'.join(users_htmls)
     context.bot.send_message(
         poll_model.chat_id,
-        f'Poll is finished. People who answered "{poll_model.options[0]}":\n\n{user_list_str}',
+        f'Poll is finished. {poll_model.formatted_answer_voters(0, True)}',
         reply_to_message_id=poll_model.message_id,
         parse_mode=ParseMode.HTML,
     )

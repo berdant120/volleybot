@@ -20,6 +20,9 @@ def parse_max_param(question: str) -> int:
 
 
 def check_permissions(user_name):
-    mock_message = 'You don`t have permissions to use this function, please contact @berd_ant for more info'
+    if not ACCESS_WHITE_LIST:
+        return
+
+    error_msg = 'You don`t have permissions to use this function, please contact @berd_ant for more info'
     if user_name not in ACCESS_WHITE_LIST:
-        raise Exception(mock_message)
+        raise Exception(error_msg)
