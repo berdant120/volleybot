@@ -9,8 +9,8 @@ from models.tournament import Tournament
 
 
 class GoogleSheetExporter:
-    def __init__(self, client_secret_path: str = 'client_secret.json'):
-        self.client: Client = pygsheets.authorize(client_secret_path)
+    def __init__(self, client_secret_path: str = 'client_secret.json', creds_dir: str = ''):
+        self.client: Client = pygsheets.authorize(client_secret_path, credentials_directory=creds_dir)
         self.default_spr = self._get_spreadsheet(DEFAULT_SPR_ID)
 
     def _get_spreadsheet(self, sheet_id: str) -> Spreadsheet:

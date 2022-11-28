@@ -133,5 +133,5 @@ def main():
 
 
 if __name__ == '__main__':
-    google_sheet_exporter = GoogleSheetExporter()
+    google_sheet_exporter = GoogleSheetExporter('data/client_secret.json', 'data')
     main()
