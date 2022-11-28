@@ -8,5 +8,5 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
-      - ./volleybot/data:/app/data
+      - ./data:/app/data
     restart: always

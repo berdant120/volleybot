@@ -1,17 +1,24 @@
 from dataclasses import dataclass, field, InitVar
-from typing import List, Dict
 from datetime import datetime
+from typing import List, Dict, Optional
 
 from telegram.utils.helpers import mention_html
-
-from utils import parse_max_param
 
 
 @dataclass
 class UserModel:
-    name: str
+    first_nm: str
+    last_nm: Optional[str]
     link: str
     tg_id: int
+
+    def __str__(self):
+        return f'{self.first_nm} @{self.link}'
+
+    @property
+    def full_name(self):
+        last_nm = f' {self.last_nm}' if self.last_nm else ''
+        return f'{self.first_nm}{last_nm}'
 
 
 @dataclass
@@ -32,10 +39,10 @@ class PollOption:
         if user_id in self.votes:
             del self.votes[user_id]
 
-    def users(self):
+    def users(self) -> List[UserModel]:
         return [x.user for x in sorted(self.votes.values(), key=lambda v: v.datetime)]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.votes)
 
 
@@ -45,13 +52,12 @@ class PollModel:
     chat_id: int
     question: str
     options: InitVar[List[str]]
+    option_1_limit: int
     created_dt: datetime = None
-    option_1_limit: int = None
     answers: List[PollOption] = None
     closed: bool = False
 
     def __post_init__(self, options: List[str]):
-        self.option_1_limit = parse_max_param(self.question)
         self.answers = [PollOption(x) for x in options]
         self.created_dt = datetime.utcnow()
 
@@ -66,7 +72,7 @@ class PollModel:
 
     def formatted_answer_voters(self, option_num: int, with_desc: bool = False) -> str:
         users = self.answers[option_num].users()
-        users_htmls = [f'{i + 1}. {mention_html(x.tg_id, x.name)}' for i, x in enumerate(users)]
+        users_htmls = [f'{i + 1}. {mention_html(x.tg_id, x.full_name)}' for i, x in enumerate(users)]
         user_list_str = '\n'.join(users_htmls)
         if not with_desc:
             return user_list_str
