@@ -21,7 +21,7 @@ class Tournament:
             team_nms: Optional[List[str]] = None):
         self.users = users
         self.name = name
-        team_nms = team_nms if team_nms else [f'Команда {i}' for i in range(1, 100)]
+        team_nms = team_nms if team_nms else [f'Team {i}' for i in range(1, 100)]
         player_per_team = player_per_team if player_per_team else 4
         self.teams = self._create_teams(player_per_team, team_nms)
         logger.info(f'Created tournament with {len(self.teams)} teams')

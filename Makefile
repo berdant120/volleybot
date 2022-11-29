@@ -11,5 +11,4 @@ build:
 	@echo "Running build.."
 	docker-compose build
 run:
-	docker-compose up -d
-
+	docker-compose run telegram_bot_app
