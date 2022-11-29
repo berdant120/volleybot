@@ -1,21 +1,21 @@
 import pytest
 
-from models import PollModel, UserModel
+from models.telegram import PollModel, UserModel
 
 
 @pytest.fixture
 def poll():
-    return PollModel(123, 234, 'abc max 3', ['a', 'b', 'c'])
+    return PollModel(123, 234, 'abc max 3', ['a', 'b', 'c'], 3)
 
 
 @pytest.fixture
 def user_1():
-    return UserModel('u1', 'l1', 1001)
+    return UserModel('u1', None, 'l1', 1001)
 
 
 @pytest.fixture
 def user_2():
-    return UserModel('u2', 'l2', 1002)
+    return UserModel('u2', None, 'l2', 1002)
 
 
 def test_poll_model_create(poll):

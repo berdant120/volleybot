@@ -8,8 +8,10 @@ from telegram.ext import Updater, CallbackContext, CommandHandler, PollAnswerHan
     PicklePersistence
 
 from config import TELEGRAM_BOT_TOKEN, DEV_CHAT_ID, CACHE_FILE_PATH
-from models import PollModel, UserModel
-from utils import check_permissions
+from google_sheet import GoogleSheetExporter
+from models.telegram import PollModel, UserModel
+from models.tournament import Tournament
+from utils import check_permissions, parse_player_amount, parse_max_param
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -39,6 +41,7 @@ def receive_poll(update: Update, context: CallbackContext) -> None:
             options=options,
             message_id=message.message_id,
             chat_id=update.effective_chat.id,
+            option_1_limit=parse_max_param(actual_poll.question),
         )
         context.bot_data[message.poll.id] = poll_model
         logging.info(f'Created poll {message.poll.id}:{poll_model}')
@@ -54,7 +57,7 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     logging.debug(f'Received answer from poll {poll_id}')
 
     try:
-        poll_model = context.bot_data[poll_id]
+        poll_model: PollModel = context.bot_data[poll_id]
     except KeyError:
         logging.error(f'Unknown poll update [poll_id={poll_id}]')
         return
@@ -64,7 +67,7 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
 
     poll_model.update_answers(
         selected_options=answer.option_ids,
-        user=UserModel(answer.user.first_name, answer.user.username, answer.user.id),
+        user=UserModel(answer.user.first_name, answer.user.last_name, answer.user.username, answer.user.id),
     )
 
     if len(poll_model.answers[0]) < poll_model.option_1_limit:
@@ -80,8 +83,15 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
         parse_mode=ParseMode.HTML,
     )
 
+    player_per_team = parse_player_amount(poll_model.question)
+    tournament = Tournament(poll_model.question, poll_model.answers[0].users(), player_per_team=player_per_team)
+    context.bot.send_message(poll_model.chat_id, str(tournament))
+
+    table_link = google_sheet_exporter.export_tournament(tournament)
+    context.bot.send_message(poll_model.chat_id, f'Created table link: {table_link}')
+
     logging.info(f'Finished poll {poll_id}')
-    del context.bot_data[poll_id]
+    # del context.bot_data[poll_id]
 
 
 def handle_unknown_command(update: Update, context: CallbackContext):
@@ -108,7 +118,7 @@ def handle_error(update: object, context) -> None:
 
 def main():
     pickle_cache = PicklePersistence(CACHE_FILE_PATH, store_user_data=False, store_chat_data=False)
-    updater = Updater(token=TELEGRAM_BOT_TOKEN, persistence=pickle_cache)
+    updater = Updater(token=TELEGRAM_BOT_TOKEN, persistence=pickle_cache, workers=1)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler('start', start))
@@ -123,4 +133,5 @@ def main():
 
 
 if __name__ == '__main__':
+    google_sheet_exporter = GoogleSheetExporter('data/client_secret.json', 'data')
     main()

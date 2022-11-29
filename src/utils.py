@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from config import ACCESS_WHITE_LIST
 
@@ -26,3 +27,14 @@ def check_permissions(user_name):
     error_msg = 'You don`t have permissions to use this function, please contact @berd_ant for more info'
     if user_name not in ACCESS_WHITE_LIST:
         raise Exception(error_msg)
+
+
+def parse_player_amount(question: str) -> Optional[int]:
+    matches = re.findall(r'(\d)[xXхХ]\1', question)
+    if len(matches) > 1:
+        raise Exception(f'Only single split option allowed {matches}')
+
+    if not matches:
+        return None
+
+    return int(matches[0])
