@@ -9,11 +9,12 @@ from telegram.utils.helpers import mention_html
 class UserModel:
     first_nm: str
     last_nm: Optional[str]
-    link: str
+    link: Optional[str]
     tg_id: int
 
     def __str__(self):
-        return f'{self.first_nm} @{self.link}'
+        last_nm = f'@{self.link}' if self.link else self.last_nm if self.last_nm else ''
+        return f'{self.first_nm} {last_nm}'
 
     @property
     def full_name(self):
