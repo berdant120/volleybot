@@ -5,7 +5,7 @@ from models.telegram import PollModel, UserModel
 
 @pytest.fixture
 def poll():
-    return PollModel(123, 234, 'abc max 3', ['a', 'b', 'c'], 3)
+    return PollModel(234, 'abc max 3', ['a', 'b', 'c'], 3, 123)
 
 
 @pytest.fixture
@@ -16,6 +16,15 @@ def user_1():
 @pytest.fixture
 def user_2():
     return UserModel('u2', None, 'l2', 1002)
+
+
+@pytest.mark.parametrize('user_model, expected', [
+    (UserModel('u2', 'ln2', 'l2', 1002), 'u2 @l2'),
+    (UserModel('u2', 'ln2', None, 1002), 'u2 ln2'),
+    (UserModel('u2', None, None, 1002), 'u2 '),
+])
+def test_user_model_str(user_model, expected):
+    assert str(user_model) == expected
 
 
 def test_poll_model_create(poll):

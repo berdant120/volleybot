@@ -9,7 +9,7 @@ def test_init():
 
 
 def test_create_teams():
-    t = Tournament('name', [1, 2, 3, 4, 5, 6, 7, 8, 9], 3, ['a', 'b', 'c'])
+    t = Tournament('name', [1, 2, 3, 4, 5, 6, 7, 8, 9], 3, 'shname', ['a', 'b', 'c'])
 
     res1 = t.teams
     res2 = t._create_teams(3, ['a', 'b', 'c'])
