@@ -1,7 +1,9 @@
 import re
+import traceback
+from datetime import datetime
 from typing import Optional
 
-from config import ACCESS_WHITE_LIST
+from loguru import logger
 
 
 def parse_max_param(question: str) -> int:
@@ -20,15 +22,6 @@ def parse_max_param(question: str) -> int:
     return int(raw_value)
 
 
-def check_permissions(user_name):
-    if not ACCESS_WHITE_LIST:
-        return
-
-    error_msg = 'You don`t have permissions to use this function, please contact @berd_ant for more info'
-    if user_name not in ACCESS_WHITE_LIST:
-        raise Exception(error_msg)
-
-
 def parse_player_amount(question: str) -> Optional[int]:
     matches = re.findall(r'(\d)[xXхХ]\1', question)
     if len(matches) > 1:
@@ -38,3 +31,22 @@ def parse_player_amount(question: str) -> Optional[int]:
         return None
 
     return int(matches[0])
+
+
+def parse_create_poll_args(args_str: str):
+    splitted_args = args_str.split()
+    try:
+        location_nm, date_str, time_str = splitted_args[1:4]
+    except:
+        logger.error(f'Cant parse input {args_str}')
+        logger.error(traceback.print_exc())
+        raise Exception('Incorrect format of input parameters')
+
+    datetime_str = f'{date_str} {time_str}'
+    try:
+        dttm = datetime.fromisoformat(datetime_str)
+    except:
+        logger.error(f'Cant parse input datetime {datetime_str}')
+        raise Exception(f'Incorrect format of input datetime {datetime_str}')
+
+    return location_nm, dttm

@@ -1,0 +1,38 @@
+{
+  "common_msg_template": "*Регистрация на игру*\n\nДата: {date} | Время: {time}\nЛокация: [{location_nm} (\uD83D\uDCCDclick]({location_link}))\nСтоимость: Донат\n[FAQ для новых участников](https://telegra.ph/FAQ-dlya-novyh-uchastnikov-10-21)",
+  "poll_msg_template": "Лига {league_nm} | Уровень: {league_level}\nФормат игр: {game_format}",
+  "answer_options": [
+    "Запиши меня в команду!",
+    "Еще думаю…"
+  ],
+  "locations": {
+    "berawa": {
+      "location_nm": "Пляж Berawa",
+      "location_link": "https://telegra.ph/Lokaciya---plyazh-Berawa-11-27"
+    },
+    "nusa": {
+      "location_nm": "Пляж Nusa Dua",
+      "location_link": "https://maps.app.goo.gl/fHX8mYSnT7kHkhc96"
+    }
+  },
+  "leagues": [
+    {
+      "league_desc": {
+        "league_nm": "A",
+        "league_level": "Высокий",
+        "game_format": "2x2"
+      },
+      "team_cnt": 4,
+      "player_per_team": 2
+    },
+    {
+      "league_desc": {
+        "league_nm": "B",
+        "league_level": "Любительский",
+        "game_format": "4x4"
+      },
+      "team_cnt": 8,
+      "player_per_team": 4
+    }
+  ]
+}

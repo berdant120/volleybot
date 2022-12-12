@@ -5,7 +5,7 @@ from models.telegram import PollModel, UserModel
 
 @pytest.fixture
 def poll():
-    return PollModel(123, 234, 'abc max 3', ['a', 'b', 'c'], 3)
+    return PollModel(234, 'abc max 3', ['a', 'b', 'c'], 3, 123)
 
 
 @pytest.fixture

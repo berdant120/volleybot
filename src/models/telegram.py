@@ -49,14 +49,15 @@ class PollOption:
 
 @dataclass
 class PollModel:
-    message_id: int
     chat_id: int
     question: str
     options: InitVar[List[str]]
     option_1_limit: int
+    message_id: Optional[int] = None
     created_dt: datetime = None
     answers: List[PollOption] = None
     closed: bool = False
+    combined_poll_message_id: Optional[int] = None
 
     def __post_init__(self, options: List[str]):
         self.answers = [PollOption(x) for x in options]
@@ -79,3 +80,25 @@ class PollModel:
             return user_list_str
 
         return f'People who answered "{self.answers[option_num].text}":\n\n{user_list_str}'
+
+
+@dataclass
+class League:
+    name: str
+    teams_cnt: int
+    player_per_team: int
+    poll: PollModel
+
+
+@dataclass
+class CombinedPoll:
+    chat_id: int
+    common_message: str
+    leagues: List[League]
+    event_dttm: datetime
+    location_nm: str
+    message_id: Optional[int] = None
+
+    @property
+    def closed(self):
+        return all(x.poll.closed for x in self.leagues)
