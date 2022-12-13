@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from tg_bot.parse_utils import parse_max_param, parse_player_amount, parse_create_poll_args
+from tg_bot.parse_utils import parse_max_param, parse_player_amount, parse_create_poll_args, parse_update_poll_limit
 import pytest
 
 
@@ -40,3 +40,10 @@ def test_parse_max_param_empty(input_str):
 ])
 def test_parse_create_poll_args(input_str, expected):
     assert parse_create_poll_args(input_str) == expected
+
+
+@pytest.mark.parametrize('input_str, expected', [
+    ('/update_poll_limit 1234 120', ('1234', 120)),
+])
+def test_parse_update_poll_limit(input_str, expected):
+    assert parse_update_poll_limit(input_str) == expected

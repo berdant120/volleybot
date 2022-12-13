@@ -50,3 +50,21 @@ def parse_create_poll_args(args_str: str):
         raise Exception(f'Incorrect format of input datetime {datetime_str}')
 
     return location_nm, dttm
+
+
+def parse_update_poll_limit(args_str: str):
+    splitted_args = args_str.split()
+    try:
+        poll_id, new_limit = splitted_args[1:3]
+    except:
+        logger.error(f'Cant parse input {args_str}')
+        logger.error(traceback.print_exc())
+        raise Exception('Incorrect format of input parameters')
+
+    try:
+        new_limit = int(new_limit)
+    except:
+        logger.error(f'Cant cast new_limit to int "{new_limit}"')
+        raise Exception(f'Incorrect format of input limit')
+
+    return poll_id, new_limit

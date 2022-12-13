@@ -44,7 +44,7 @@ class TelegramUpdateHandler:
 
         player_per_team = parse_player_amount(poll_model.question)
         tournament = Tournament(poll_model.question, poll_model.answers[0].users(), player_per_team=player_per_team)
-        context.bot.send_message(poll_model.chat_id, str(tournament))
+        context.bot.send_message(poll_model.chat_id, str(tournament), parse_mode=ParseMode.HTML)
 
         ws, _ = self.google_sheet_exporter.export_tournament(tournament)
         context.bot.send_message(poll_model.chat_id, f'Created table link: {ws.url}')
@@ -68,6 +68,24 @@ class TelegramUpdateHandler:
 
         table_link = self.google_sheet_exporter.export_combined_tournament(combined_poll, tournaments).url
         context.bot.send_message(combined_poll.chat_id, f'Created table link: {table_link}')
+
+    def on_poll_model_changed(self, poll_id: str, poll_model: PollModel, context: CallbackContext):
+        if poll_model.closed or len(poll_model.answers[0]) < poll_model.option_1_limit:
+            return
+
+        context.bot.stop_poll(poll_model.chat_id, poll_model.message_id)
+        poll_model.closed = True
+        logger.info(f'Finished poll {poll_id}')
+
+        if not (parent_id := poll_model.combined_poll_message_id):
+            self.on_single_poll_closed(poll_model, context)
+            return
+
+        # in case poll is part of combined id, but there are unfinished polls - waiting until all closed
+        if not (combined_poll := context.bot_data['combined_polls'][parent_id]).closed:
+            return
+
+        self.on_combined_poll_closed(combined_poll, context)
 
     @staticmethod
     def _load_team_names(league_cnt: int) -> list[Optional[list[str]]]:
