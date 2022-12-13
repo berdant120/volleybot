@@ -1,6 +1,6 @@
-.PHONY: all test build run git-update
+.PHONY: all test build run git-update stop
 
-all: git-update test build run
+all: git-update test build stop run
 
 git-update:
 	git pull
@@ -10,5 +10,7 @@ test:
 build:
 	@echo "Running build.."
 	docker-compose build
+stop:
+	docker-compose down
 run:
 	docker-compose run telegram_bot_app
