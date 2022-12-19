@@ -158,8 +158,8 @@ def main():
 
 
 if __name__ == '__main__':
-    # google_sheet_exporter = GoogleSheetExporter('data/client_secret.json', 'data')
-    handler = TelegramUpdateHandler(None)
+    google_sheet_exporter = GoogleSheetExporter('data/client_secret.json', 'data')
+    handler = TelegramUpdateHandler(google_sheet_exporter)
     poll_config_loader = JsonPollConfigLoader('data/poll_template.json')
     poll_generator = PollGenerator(poll_config_loader)
     main()
