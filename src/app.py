@@ -50,7 +50,7 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     logger.debug(f'Received answer from poll {poll_id}')
 
     try:
-        poll_model: PollModel = context.bot_data[poll_id]
+        poll_model: PollModel = context.bot_data['polls'][poll_id]
     except KeyError:
         logger.error(f'Unknown poll update [poll_id={poll_id}]')
         return
@@ -70,7 +70,7 @@ def update_poll_limit(update: Update, context: CallbackContext) -> None:
     try:
         poll_id, new_limit = parse_update_poll_limit(update.message.text)
         logger.info(f'Received command to update poll {poll_id} limit to {new_limit}')
-        poll_model: PollModel = context.bot_data[poll_id]
+        poll_model: PollModel = context.bot_data['polls'][poll_id]
     except Exception as ex:
         logger.error(update.message.text, str(ex))
         context.bot.send_message(chat_id=update.effective_chat.id, text=str(ex))
@@ -78,6 +78,27 @@ def update_poll_limit(update: Update, context: CallbackContext) -> None:
 
     poll_model.option_1_limit = new_limit
     handler.on_poll_model_changed(poll_id, poll_model, context)
+
+
+def get_active_polls(update: Update, context: CallbackContext):
+    polls = [(k, poll_model) for k, poll_model in context.bot_data['polls'].items() if not poll_model.closed]
+    if not polls:
+        context.bot.send_message(update.message.chat_id, 'No active polls found')
+
+    for poll_id, poll_model in polls:
+        tournament = '-'
+        if poll_model.combined_poll_message_id:
+            combined_poll = context.bot_data['combined_polls'][poll_model.combined_poll_message_id]
+            tournament = f'{combined_poll.location_nm} {combined_poll.event_dttm.strftime("%d.%m %H:%M")}'
+
+        poll_name = poll_model.question.split('\n')[0]
+        msg = f'<b>ID:</b> {poll_id}\n' \
+              f'<b>Event:</b> {tournament}\n' \
+              f'<b>Poll:</b> {poll_name}\n' \
+              f'<b>Votes:</b> {len(poll_model.answers[0])}/{poll_model.option_1_limit}'
+
+        context.bot.send_message(update.message.chat_id, msg,
+            reply_to_message_id=poll_model.message_id, parse_mode=ParseMode.HTML)
 
 
 def create_poll(update: Update, context: CallbackContext):
@@ -122,12 +143,13 @@ def main():
     dispatcher.add_handler(CommandHandler('help', start))
     dispatcher.add_handler(CommandHandler('create_poll', create_poll))
     dispatcher.add_handler(CommandHandler('update_poll_limit', update_poll_limit))
+    dispatcher.add_handler(CommandHandler('active_polls', get_active_polls))
     dispatcher.add_handler(PollAnswerHandler(receive_poll_answer))
     dispatcher.add_handler(MessageHandler(Filters.poll, receive_poll))
     dispatcher.add_handler(MessageHandler(Filters.command, handle_unknown_command))
     dispatcher.add_error_handler(handle_error)
 
-    for init_key in ('combined_polls', 'tournaments'):
+    for init_key in ('combined_polls', 'tournaments', 'polls'):
         if init_key not in dispatcher.bot_data:
             dispatcher.bot_data[init_key] = {}
 
