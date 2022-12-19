@@ -29,7 +29,7 @@ class TelegramUpdateHandler:
 
         poll_model.message_id = message.message_id
         poll_model.combined_poll_message_id = combined_poll_message_id
-        context.bot_data[message.poll.id] = poll_model
+        context.bot_data['polls'][message.poll.id] = poll_model
         logger.info(f'Created poll {message.poll.id}:{poll_model}')
 
         return message.poll.id
@@ -49,7 +49,7 @@ class TelegramUpdateHandler:
         ws, _ = self.google_sheet_exporter.export_tournament(tournament)
         context.bot.send_message(poll_model.chat_id, f'Created table link: {ws.url}')
 
-        # del context.bot_data[poll_id]
+        # del context.bot_data['polls'][poll_id]
 
     def on_combined_poll_closed(self, combined_poll: CombinedPoll, context: CallbackContext):
         league_team_nms = self._load_team_names(len(combined_poll.leagues))
