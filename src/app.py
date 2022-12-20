@@ -77,6 +77,7 @@ def update_poll_limit(update: Update, context: CallbackContext) -> None:
         return
 
     poll_model.option_1_limit = new_limit
+    handler.send_poll_limit(poll_id, poll_model, update.effective_chat.id, context)
     handler.on_poll_model_changed(poll_id, poll_model, context)
 
 
@@ -86,32 +87,27 @@ def get_active_polls(update: Update, context: CallbackContext):
         context.bot.send_message(update.message.chat_id, 'No active polls found')
 
     for poll_id, poll_model in polls:
-        tournament = '-'
-        if poll_model.combined_poll_message_id:
-            combined_poll = context.bot_data['combined_polls'][poll_model.combined_poll_message_id]
-            tournament = f'{combined_poll.location_nm} {combined_poll.event_dttm.strftime("%d.%m %H:%M")}'
-
-        poll_name = poll_model.question.split('\n')[0]
-        msg = f'<b>ID:</b> {poll_id}\n' \
-              f'<b>Event:</b> {tournament}\n' \
-              f'<b>Poll:</b> {poll_name}\n' \
-              f'<b>Votes:</b> {len(poll_model.answers[0])}/{poll_model.option_1_limit}'
-
-        context.bot.send_message(update.message.chat_id, msg,
-            reply_to_message_id=poll_model.message_id, parse_mode=ParseMode.HTML)
+        handler.send_poll_limit(poll_id, poll_model, update.effective_chat.id, context)
 
 
 def create_poll(update: Update, context: CallbackContext):
-    location_nm, dttm = parse_create_poll_args(update.message.text)
-    combined_poll = poll_generator.create_combined_poll(update.effective_chat.id, location_nm, dttm)
+    try:
+        check_permissions(update.effective_user.username)
+        location_nm, dttm = parse_create_poll_args(update.message.text)
+        combined_poll = poll_generator.create_combined_poll(update.effective_chat.id, location_nm, dttm)
 
-    message = context.bot.send_message(update.message.chat_id, combined_poll.common_message,
-        parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
-    combined_poll.message_id = message.message_id
-    for league in combined_poll.leagues:
-        handler.create_tg_poll(league.poll, context, combined_poll.message_id)
+        message = context.bot.send_message(update.message.chat_id, combined_poll.common_message,
+            parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+        combined_poll.message_id = message.message_id
+        for league in combined_poll.leagues:
+            handler.create_tg_poll(league.poll, context, combined_poll.message_id)
 
-    context.bot_data['combined_polls'][combined_poll.message_id] = combined_poll
+        context.bot_data['combined_polls'][combined_poll.message_id] = combined_poll
+
+    except Exception as ex:
+        logger.error(update.message.text, str(ex))
+        context.bot.send_message(chat_id=update.effective_chat.id, text=str(ex))
+        return
 
 
 def handle_unknown_command(update: Update, context: CallbackContext):

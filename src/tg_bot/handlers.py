@@ -87,6 +87,25 @@ class TelegramUpdateHandler:
 
         self.on_combined_poll_closed(combined_poll, context)
 
+    def send_poll_limit(self, poll_id: str, poll_model: PollModel, chat_id: int, context: CallbackContext):
+        tournament = '-'
+        if poll_model.combined_poll_message_id:
+            combined_poll = context.bot_data['combined_polls'][poll_model.combined_poll_message_id]
+            tournament = f'{combined_poll.location_nm} {combined_poll.event_dttm.strftime("%d.%m %H:%M")}'
+
+        poll_name = poll_model.question.split('\n')[0]
+        msg = f'<b>ID:</b> {poll_id}\n' \
+              f'<b>Event:</b> {tournament}\n' \
+              f'<b>Poll:</b> {poll_name}\n' \
+              f'<b>Created:</b> {poll_model.created_dt.strftime("%d.%m %H:%M")}\n' \
+              f'<b>Votes:</b> {len(poll_model.answers[0])}/{poll_model.option_1_limit}'
+
+        try:
+            context.bot.send_message(chat_id, msg, reply_to_message_id=poll_model.message_id, parse_mode=ParseMode.HTML)
+        except:
+            # message not found
+            context.bot.send_message(chat_id, msg, parse_mode=ParseMode.HTML)
+
     @staticmethod
     def _load_team_names(league_cnt: int) -> list[Optional[list[str]]]:
         file_path = 'data/team_names.txt'
